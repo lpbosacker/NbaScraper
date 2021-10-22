@@ -8,13 +8,12 @@ object Driver {
   
   val cfg = ConfigFactory.load("application.conf")
   
-  val scraper = new NbaScraper(cfg)
   // sequence of characters to retrieve player URLs by first 
   // letter of player's last name
   val playerIdx : Seq[Char] = for (ch <- 'a' to 'z') yield { ch }
 
   lazy val playerURLs : Array[PlayerURL] = 
-    scraper.getPlayerURLs(playerIdx).filter(_.isActive)
+    NbaScraper.getPlayerURLs(playerIdx).filter(_.isActive)
 
   // --------- main ------------------------------------------
 
@@ -48,7 +47,7 @@ object Driver {
     println(
       s"Writing ${year.toString} game stats for ${playerURLs.size} players"
     )
-    val games = playerURLs.flatMap(pu => scraper.getPlayerGames(pu, year))
+    val games = playerURLs.flatMap(pu => NbaScraper.getPlayerGames(pu, year))
     println(s"Retrieved ${games.size} player game stats")
     val getter = (pg : PlayerGame) => pg.json
     val jsonFile = cfg.getString("data_directory") +
@@ -59,7 +58,7 @@ object Driver {
   // ---------------------------------------------------------
 
   def writePlayers : Unit = {
-    val players = scraper.getPlayers(playerURLs)
+    val players = NbaScraper.getPlayers(playerURLs)
     println(s"Retrieved ${players.size} players")
     val getter = (p : Player) => p.json
     val jsonFile = cfg.getString("data_directory") + 
@@ -71,10 +70,10 @@ object Driver {
   // ---------------------------------------------------------
 
   def writeTeams : Unit = {
-    // val teams = scraper.getTeams
+    // val teams = NbaScraper.getTeams
     val getter = (t : Team) => t.json
     val jsonFile = cfg.getString("data_directory") + cfg.getString("team_file_name")
-    (new DataWriter(jsonFile, getter) ).write(Team.teams)
+    (new DataWriter(jsonFile, getter) ).write(NbaScraper.teams)
   }
   
   // ---------------------------------------------------------

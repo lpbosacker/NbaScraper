@@ -3,3 +3,4 @@ spark/
 stuff/
 *.stuff
 target/
+*.swp

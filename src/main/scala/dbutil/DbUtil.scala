@@ -5,7 +5,7 @@ import com.typesafe.config.{Config, ConfigFactory, ConfigException}
 import java.sql.{Connection, DriverManager}
 import scala.jdk.CollectionConverters._
  
-class DbUtil {
+object DbUtil {
 
   // -------------------------------------------------
 
@@ -20,6 +20,5 @@ class DbUtil {
   // -------------------------------------------------
 
 }
-
 
 

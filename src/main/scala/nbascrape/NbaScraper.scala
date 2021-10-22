@@ -3,26 +3,28 @@ package nbascrape
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import scala.jdk.CollectionConverters._
-import com.typesafe.config.Config
+import com.typesafe.config.{Config, ConfigFactory}
 import nbascrape.NbaScraper.PlayerURL
 import nbascrape.{TeamGame, GameResult}
 
 // --------------------------------------------------
 
-class NbaScraper(config : Config) {
+object NbaScraper {
 
-  val baseURL = config.getString("source_url")
+  val cfg = ConfigFactory.load("application.conf")
+  val baseURL = cfg.getString("source_url")
 
-  val playerSelector = config.getString("css_selector.player")
-
-/* ========================== *
   case class PlayerURL (
     name : String, url : String, isActive : Boolean
     ) {
       override def toString() : String = 
         { if (isActive) "*" else " " } + f"${name} @ ${url}"  
     }
- * ========================== */
+    
+  val playerSelector = cfg.getString("css_selector.player")
+
+  val teams = cfg.getObject("teams").entrySet().asScala.
+    map(e => Team(e.getKey(), e.getValue().render() ) ).toArray
     
   // ---------------------------------------------------------
   def getPlayers(playerURLs : Array[PlayerURL]) : Array[Player] = {
@@ -66,7 +68,7 @@ class NbaScraper(config : Config) {
 
     val gameLogURL = baseURL + url.replace(".html",s"/gamelog/${year.toString}")
 
-    val gameSelector = config.getString("css_selector.game")
+    val gameSelector = cfg.getString("css_selector.game")
 
     Jsoup.connect(gameLogURL).get().body().
       select(gameSelector).asScala.toArray 
@@ -77,7 +79,7 @@ class NbaScraper(config : Config) {
   def getSingleGameStats(game : org.jsoup.nodes.Element) : 
     Map[String, String] = {
 
-    val gameStatSelector = config.getString("css_selector.gameStat")
+    val gameStatSelector = cfg.getString("css_selector.gameStat")
     game.select(s"td[${gameStatSelector}]").asScala.
       map(el => ( el.attr(s"${gameStatSelector}"), el.text() ) ).
       toMap
@@ -134,7 +136,7 @@ class NbaScraper(config : Config) {
   // Abbreviation is key
   def getTeams : Array[Team] = {
 
-    val teamURL = config.getString("team_url")
+    val teamURL = cfg.getString("team_url")
 
     Jsoup.connect(teamURL).get().body().
       select("table[id=teams_active]").
@@ -145,23 +147,14 @@ class NbaScraper(config : Config) {
 
   // ---------------------------------------------------------
 
-  def writeJson(fname : String, json : Array[String]) : Unit = {
-    import java.io.FileWriter
-    val fw = new FileWriter(fname)
-    json.foreach(s => fw.write(s + "\n") )
-    fw.close()
-  }
-  
-  // ---------------------------------------------------------
-
   def getAllGameResults(year: Int) : Array[GameResult] = {
-    val teamIds = Team.teams.map(_.teamId) 
+    val teamIds = teams.map(_.teamId)
     teamIds.flatMap(teamId => getTeamGameResults(teamId, year) )
   }
   // ---------------------------------------------------------
 
   def getTeamGameResults(teamId : String, year : Int) : Array[GameResult] = {
-    val scheduleURL = config.getString("source_url") +
+    val scheduleURL = cfg.getString("source_url") +
       s"/teams/${teamId}/${year.toString}_games.html"
 
     // select jsoup elements for all games for this team and year
@@ -189,56 +182,9 @@ class NbaScraper(config : Config) {
         , el.select("td[data-stat=wins]").text().toInt
         , el.select("td[data-stat=losses]").text().toInt
         , el.select("td[data-stat=game_streak]").text()
-      )
+   )
     ).toArray
   }
-  // ---------------------------------------------------------
-}
-
-// ---------------------------------------------------------
-// ---------- companion object -----------------------------
-object NbaScraper {
-  
-  val teams : Array[Team] = Array(
-      Team("ATL", "Atlanta Hawks")
-    , Team("BOS", "Boston Celtics")
-    , Team("BRK", "Brooklyn Nets")
-    , Team("CHA", "Charlotte Hornets")
-    , Team("CHI", "Chicago Bulls")
-    , Team("CLE", "Cleveland Cavaliers")
-    , Team("DAL", "Dallas Mavericks")
-    , Team("DEN", "Denver Nuggets")
-    , Team("DET", "Detroit Pistons")
-    , Team("GSW", "Golden State Warriors")
-    , Team("HOU", "Houston Rockets")
-    , Team("IND", "Indiana Pacers")
-    , Team("LAC", "Los Angeles Clippers")
-    , Team("LAL", "Los Angeles Lakers")
-    , Team("MEM", "Memphis Grizzlies")
-    , Team("MIA", "Miami Heat")
-    , Team("MIL", "Milwaukee Bucks")
-    , Team("MIN", "Minnesota Timberwolves")
-    , Team("NOH", "New Orleans Pelicans")
-    , Team("NYK", "New York Knicks")
-    , Team("OKC", "Oklahoma City Thunder")
-    , Team("ORL", "Orlando Magic")
-    , Team("PHI", "Philadelphia 76ers")
-    , Team("PHO", "Phoenix Suns")
-    , Team("POR", "Portland Trail Blazers")
-    , Team("SAC", "Sacramento Kings")
-    , Team("SAS", "San Antonio Spurs")
-    , Team("TOR", "Toronto Raptors")
-    , Team("UTA", "Utah Jazz")
-    , Team("WAS", "Washington Wizards")
-  )
-
-  case class PlayerURL (
-    name : String, url : String, isActive : Boolean
-    ) {
-      override def toString() : String = 
-        { if (isActive) "*" else " " } + f"${name} @ ${url}"  
-    }
-    
   // ---------------------------------------------------------
 
   def writeJson(fname : String, json : Array[String]) : Unit = {
@@ -247,5 +193,8 @@ object NbaScraper {
     json.foreach(s => fw.write(s + "\n") )
     fw.close()
   }
+  // ---------------------------------------------------------
+  
   
 }
+
