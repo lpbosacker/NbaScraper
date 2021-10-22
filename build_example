@@ -1,0 +1,22 @@
+
+import sbt.Keys.libraryDependencies
+
+ThisBuild / scalaVersion := "2.13.4"
+ThisBuild / organization := "link.bosacker"
+
+val nscalaTime = "com.github.nscala-time" %% "nscala-time" % "2.26.0"
+val postgresql = "org.postgresql" % "postgresql" % "42.2.18"
+val tsconfig = "com.typesafe" % "config" % "1.4.1"
+
+lazy val financials = (project in file("."))
+  .settings(
+    name := "Financials",
+    libraryDependencies ++= Seq(
+       nscalaTime
+      ,postgresql
+      ,tsconfig
+    )
+  )
+
+version := "0.1"
+
