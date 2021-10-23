@@ -26,6 +26,6 @@ case class GameResult(
     , "opp_pts" -> oppPts
     , "wins" -> wins
     , "losses" -> losses
-  )
+  ).toString
 }
 

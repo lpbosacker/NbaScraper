@@ -2,7 +2,8 @@ package nbascrape
 
 import com.typesafe.config.{ConfigFactory, Config, ConfigException}
 import scala.jdk.CollectionConverters._
-import nbascrape.NbaScraper.PlayerURL
+// import nbascrape.NbaScraper.PlayerURL
+import nbascrape.NbaScraper._
 
 object Driver {
   
@@ -29,11 +30,14 @@ object Driver {
       }
     }
 
+  val season_year = cfg.getInt("season_year")
+
   commands.map(c => 
     c match {
       case "players" => writePlayers
       case "teams" => writeTeams
-      case "player games" => writePlayerGames(cfg.getInt("season_year") )
+      case "player games" => writePlayerGames(season_year)
+      case "game results" => writeGameResults(season_year)
       case _ => println(s"Unknown command $c")
     }
   )
@@ -58,6 +62,7 @@ object Driver {
   // ---------------------------------------------------------
 
   def writePlayers : Unit = {
+
     val players = NbaScraper.getPlayers(playerURLs)
     println(s"Retrieved ${players.size} players")
     val getter = (p : Player) => p.json
@@ -70,11 +75,18 @@ object Driver {
   // ---------------------------------------------------------
 
   def writeTeams : Unit = {
-    // val teams = NbaScraper.getTeams
     val getter = (t : Team) => t.json
     val jsonFile = cfg.getString("data_directory") + cfg.getString("team_file_name")
     (new DataWriter(jsonFile, getter) ).write(NbaScraper.teams)
   }
   
   // ---------------------------------------------------------
+
+  def writeGameResults(year : Int) : Unit = {
+    val results = getAllGameResults(year)
+    val jsonFile = cfg.getString("data_directory") + 
+        cfg.getString("game_results_file_name")
+    val getter = (r : GameResult) => r.json
+    (new DataWriter(jsonFile, getter )).write(results)
+  }
 }
