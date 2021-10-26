@@ -1,9 +1,11 @@
 
-package dbutil
+package util
 
 import com.typesafe.config.{Config, ConfigFactory, ConfigException}
 import java.sql.{Connection, DriverManager}
-import scala.jdk.CollectionConverters._
+// scala 2.13 only -- import scala.jdk.CollectionConverters._
+// scala 2.12._ use JavaConverters
+import collection.JavaConverters._
  
 object DbUtil {
 

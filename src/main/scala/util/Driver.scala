@@ -1,9 +1,10 @@
-package nbascrape
+package util
 
 import com.typesafe.config.{ConfigFactory, Config, ConfigException}
-import scala.jdk.CollectionConverters._
-// import nbascrape.NbaScraper.PlayerURL
-import nbascrape.NbaScraper._
+// scala 2.13 only -- import scala.jdk.CollectionConverters._
+import collection.JavaConverters._  // scala 2.12._ use JavaConverters
+// import nbascrape.{NbaScraper, DataWriter, GameResult}
+import nbascrape._
 
 object Driver {
   
@@ -13,7 +14,7 @@ object Driver {
   // letter of player's last name
   val playerIdx : Seq[Char] = for (ch <- 'a' to 'z') yield { ch }
 
-  lazy val playerURLs : Array[PlayerURL] = 
+  lazy val playerURLs : Array[NbaScraper.PlayerURL] = 
     NbaScraper.getPlayerURLs(playerIdx).filter(_.isActive)
 
   // --------- main ------------------------------------------
@@ -83,7 +84,7 @@ object Driver {
   // ---------------------------------------------------------
 
   def writeGameResults(year : Int) : Unit = {
-    val results = getAllGameResults(year)
+    val results = NbaScraper.getAllGameResults(year)
     val jsonFile = cfg.getString("data_directory") + 
         cfg.getString("game_results_file_name")
     val getter = (r : GameResult) => r.json

@@ -2,7 +2,9 @@ package nbascrape
 
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
-import scala.jdk.CollectionConverters._
+import com.typesafe.config.{ConfigFactory, Config, ConfigException}
+import collection.JavaConverters._  // scala 2.12._ use JavaConverters
+// scala 2.13 only -- import scala.jdk.CollectionConverters._
 import com.typesafe.config.{Config, ConfigFactory}
 import nbascrape.NbaScraper.PlayerURL
 import nbascrape.{TeamGame, GameResult}

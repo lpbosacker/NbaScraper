@@ -1,8 +1,12 @@
 
-import sbt.Keys.libraryDependencies
+// import sbt.Keys.libraryDependencies
 
-ThisBuild / scalaVersion := "2.13.6"
+ThisBuild / scalaVersion := "2.12.10"
 ThisBuild / organization := "bosacker.link"
+ThisBuild / assemblyMergeStrategy := {
+  case PathList("module-info.class") => MergeStrategy.discard
+  case _ => MergeStrategy.first
+}
 
 Compile / run / fork := true
 Test / fork := true
@@ -33,4 +37,6 @@ lazy val nbascrape = (project in file(".")).
     )
   )
 
-version := "0.1"
+version := "0.2.12.10"
+
+
