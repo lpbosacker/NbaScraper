@@ -1,7 +1,5 @@
 package nbascrape
 
-import nbascrape.TeamGame
-
 import play.api.libs.json._
 
 case class GameResult(

@@ -7,7 +7,6 @@ import collection.JavaConverters._  // scala 2.12._ use JavaConverters
 // scala 2.13 only -- import scala.jdk.CollectionConverters._
 import com.typesafe.config.{Config, ConfigFactory}
 import nbascrape.NbaScraper.PlayerURL
-import nbascrape.{TeamGame, GameResult}
 
 // --------------------------------------------------
 
@@ -22,7 +21,9 @@ object NbaScraper {
       override def toString() : String = 
         { if (isActive) "*" else " " } + f"${name} @ ${url}"  
     }
-    
+   
+  val activeOnly = cfg.getBoolean("active_player_filter")
+
   val playerSelector = cfg.getString("css_selector.player")
 
   val teams = cfg.getObject("teams").entrySet().asScala.
@@ -37,19 +38,24 @@ object NbaScraper {
   // ---------------------------------------------------------
 
   def getPlayerURLs(letters : Seq[Char]) : Array[PlayerURL] = {
+    
     letters.map(ch => s"${baseURL}/players/${ch}/").
       // build individual player url and combine (flatMap)
-    flatMap(getPlayerURLsByLetter _).toArray
+    flatMap(url => getPlayerURLsByLetter(url)).toArray
   }
   // ---------------------------------------------------------
   def getPlayerURLsByLetter(url : String) : Array[PlayerURL] = {
-
+    
+    val playerFilter = {
+      if (activeOnly) { (pURL : PlayerURL) => pURL.isActive }
+      else { (pURL : PlayerURL) => true }
+    }
     val html = Jsoup.connect(url).get().select(playerSelector).asScala
     html.map(elem => PlayerURL(
       elem.text,
       elem.select("a").attr("href"),
-      elem.select("strong").hasText()
-      ) ).toArray
+      elem.select("strong").hasText() // => isActive
+      ) ).toArray.filter(playerFilter)
   }
   // ---------------------------------------------------------
 

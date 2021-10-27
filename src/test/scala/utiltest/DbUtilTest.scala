@@ -1,9 +1,9 @@
 
-package dbtest
+package util.dbtest
 
 import org.scalatest.funsuite.AnyFunSuite
 import com.typesafe.config.{Config, ConfigFactory}
-import dbutil.DbUtil
+import util.DbUtil
 
 class DbUtilTest extends AnyFunSuite {
 

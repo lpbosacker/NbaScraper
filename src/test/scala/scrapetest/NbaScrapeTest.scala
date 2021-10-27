@@ -5,6 +5,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import nbascrape.NbaScraper._
 import nbascrape.Player
 import com.typesafe.config.{Config, ConfigFactory}
+import collection.JavaConverters._
 
 class NbaScrapeTest extends AnyFunSuite {
 
@@ -15,13 +16,13 @@ class NbaScrapeTest extends AnyFunSuite {
   val testCurrentYear = testCfg.getInt("current_year")
   val testPastYear = testCfg.getInt("past_year")
   val testTeamId = testCfg.getString("test_team_id")
+  val testLetters = testCfg.getStringList("testLetters").asScala.map(_(0)).toSeq
 
   test("Player url returns players") {
     assert(getPlayerURLsByLetter(testURL).size > 0)
   }
 
   test(s"Game logs returned for ${testPastYear.toString}") {
-
     val testPlayer = getPlayerURLsByLetter(testURL).
       filter(_.name == testName).head
     val games = getPlayerGames(testPlayer, testPastYear)
@@ -52,11 +53,22 @@ class NbaScrapeTest extends AnyFunSuite {
     assert(atlanta.json.startsWith("""{"team_id":"ATL""""))
   }
 
-  test("Retrieves player attributes") {
+  test("Retrieves single player attributes") {
     val testPlayer = getPlayerURLsByLetter(testURL).
       filter(_.name == testName).head
     val playerAttributes = getPlayerAttributes(testPlayer.url)
     assert(playerAttributes.size == 6) 
+  }
+
+  test("Player attribute selection succeeds") {
+    val multiLetterURLs = getPlayerURLs(testLetters)
+    val status = try {
+      getPlayers(multiLetterURLs)
+      true
+    } catch {
+      case ex : java.lang.NullPointerException => false
+    }
+  assert(status) 
   }
 
   test(s"One active player objects created for ${testName}") {
