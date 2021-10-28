@@ -27,12 +27,12 @@ object NbaScraper {
   val playerSelector = cfg.getString("css_selector.player")
 
   val teams = cfg.getObject("teams").entrySet().asScala.
-    map(e => Team(e.getKey(), e.getValue().render() ) ).toArray
+    map(e => Team(e.getKey(), e.getValue().render() ) ).toList
     
   // ---------------------------------------------------------
-  def getPlayers(playerURLs : Array[PlayerURL]) : Array[Player] = {
+  def getPlayers(playerURLs : Array[PlayerURL]) : List[Player] = {
     playerURLs.map(p => new Player(p.name, p.url, p.isActive,
-        getPlayerAttributes(p.url) ) )
+        getPlayerAttributes(p.url) ) ).toList
   }
 
   // ---------------------------------------------------------
@@ -55,12 +55,12 @@ object NbaScraper {
       elem.text,
       elem.select("a").attr("href"),
       elem.select("strong").hasText() // => isActive
-      ) ).toArray.filter(playerFilter)
+      ) ).filter(playerFilter).toArray
   }
   // ---------------------------------------------------------
 
   def getPlayerGames(playerURL : PlayerURL, year : Int) :
-     Array[PlayerGame] = {
+     List[PlayerGame] = {
     
     val gameElements = selectPlayerGames(playerURL.url, year)
     gameElements.map(game => getSingleGameStats(game) ).
@@ -72,14 +72,14 @@ object NbaScraper {
   // using Jsoup select - returns Elements for input to getSinglePlayerGame
   //
   def selectPlayerGames(url : String, year : Int) : 
-      Array[org.jsoup.nodes.Element] = {
+      List[org.jsoup.nodes.Element] = {
 
     val gameLogURL = baseURL + url.replace(".html",s"/gamelog/${year.toString}")
 
     val gameSelector = cfg.getString("css_selector.game")
 
     Jsoup.connect(gameLogURL).get().body().
-      select(gameSelector).asScala.toArray 
+      select(gameSelector).asScala.toList
   }
 
   // ---------------------------------------------------------
@@ -142,7 +142,7 @@ object NbaScraper {
   // deprecated : incorrect team id retrieved for Brooklyn Nets
   // get team abbreviation, long name and url from team URL
   // Abbreviation is key
-  def getTeams : Array[Team] = {
+  def getTeams : List[Team] = {
 
     val teamURL = cfg.getString("team_url")
 
@@ -150,18 +150,18 @@ object NbaScraper {
       select("table[id=teams_active]").
       select("th[data-stat=franch_name] a[href]").asScala.
       map(el => (el.attr("href").substring(7,10),el.text())).
-      map{ case (cd, nm) => new Team(cd, nm) }.toArray
+      map{ case (cd, nm) => new Team(cd, nm) }.toList
   }
 
   // ---------------------------------------------------------
 
-  def getAllGameResults(year: Int) : Array[GameResult] = {
+  def getAllGameResults(year: Int) : List[GameResult] = {
     val teamIds = teams.map(_.teamId)
-    teamIds.flatMap(teamId => getTeamGameResults(teamId, year) )
+    teamIds.flatMap(teamId => getTeamGameResults(teamId, year) ).toList
   }
   // ---------------------------------------------------------
 
-  def getTeamGameResults(teamId : String, year : Int) : Array[GameResult] = {
+  def getTeamGameResults(teamId : String, year : Int) : List[GameResult] = {
     val scheduleURL = cfg.getString("source_url") +
       s"/teams/${teamId}/${year.toString}_games.html"
 
@@ -191,11 +191,11 @@ object NbaScraper {
         , el.select("td[data-stat=losses]").text().toInt
         , el.select("td[data-stat=game_streak]").text()
    )
-    ).toArray
+    ).toList
   }
   // ---------------------------------------------------------
 
-  def writeJson(fname : String, json : Array[String]) : Unit = {
+  def writeJson(fname : String, json : List[String]) : Unit = {
     import java.io.FileWriter
     val fw = new FileWriter(fname)
     json.foreach(s => fw.write(s + "\n") )

@@ -3,7 +3,7 @@ package nbascrape
 
 import play.api.libs.json._
 
-class Player(val name : String, val url : String, val isActive : Boolean,
+case class Player(val name : String, val url : String, val isActive : Boolean,
       val attr : Map[String, String]) {
 
   val json = Json.obj(

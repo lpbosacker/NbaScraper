@@ -69,7 +69,7 @@ object Driver {
     val getter = (p : Player) => p.json
     val jsonFile = cfg.getString("data_directory") + 
       cfg.getString("player_file_name")
-    (new DataWriter(jsonFile, getter) ).write(players)
+    (new DataWriter(jsonFile, getter) ).write(players.toArray)
         
   } 
 
@@ -78,13 +78,13 @@ object Driver {
   def writeTeams : Unit = {
     val getter = (t : Team) => t.json
     val jsonFile = cfg.getString("data_directory") + cfg.getString("team_file_name")
-    (new DataWriter(jsonFile, getter) ).write(NbaScraper.teams)
+    (new DataWriter(jsonFile, getter) ).write(NbaScraper.teams.toArray)
   }
   
   // ---------------------------------------------------------
 
   def writeGameResults(year : Int) : Unit = {
-    val results = NbaScraper.getAllGameResults(year)
+    val results = NbaScraper.getAllGameResults(year).toArray
     val jsonFile = cfg.getString("data_directory") + 
         cfg.getString("game_results_file_name")
     val getter = (r : GameResult) => r.json

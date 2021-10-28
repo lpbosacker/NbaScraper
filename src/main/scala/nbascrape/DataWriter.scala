@@ -25,8 +25,5 @@ class DataWriter[T](fname : String, getr : T => String) {
       sArr.foreach(s => writer.write(s"$s\n"))
     }
   }
-/* ========== *
- * ========== */
-  
 }
   // ---------------------------------------------------------
