@@ -25,6 +25,7 @@ val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "2.0.1"
 val typesafeConfig = "com.typesafe" % "config" % "1.4.1"
 val postgresql = "org.postgresql" % "postgresql" % "42.2.24"
 val playjson = "com.typesafe.play" %% "play-json" % "2.10.0-RC5"
+// val nscalatime = "com.github.nscala-time" %% "nscala-time" % "2.30.0"
 
 lazy val nbascrape = (project in file(".")).
   settings(

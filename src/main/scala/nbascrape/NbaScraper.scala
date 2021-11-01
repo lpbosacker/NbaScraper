@@ -7,6 +7,8 @@ import collection.JavaConverters._  // scala 2.12._ use JavaConverters
 // scala 2.13 only -- import scala.jdk.CollectionConverters._
 import com.typesafe.config.{Config, ConfigFactory}
 import nbascrape.NbaScraper.PlayerURL
+import java.sql.Date
+import java.text.SimpleDateFormat
 
 // --------------------------------------------------
 
@@ -31,8 +33,23 @@ object NbaScraper {
     
   // ---------------------------------------------------------
   def getPlayers(playerURLs : Array[PlayerURL]) : List[Player] = {
-    playerURLs.map(p => new Player(p.name, p.url, p.isActive,
-        getPlayerAttributes(p.url) ) ).toList
+
+    // ---------------------------------------------------------
+    def toSQLDate(dateStr : String) : java.sql.Date = {
+      val formatter = new SimpleDateFormat("yyyy-MM-dd")
+      val utilDt = formatter.parse(dateStr)
+      new java.sql.Date(utilDt.getTime())
+    }
+    // ---------------------------------------------------------
+
+    playerURLs.map(p => {
+      val attr = getPlayerAttributes(p.url)
+      new Player(p.name, p.url, p.isActive
+        , toSQLDate(attr("dob"))
+        , attr("height"), attr("weight")
+        , attr("position"), attr("shoots"), attr("college") )
+      }
+    ).toList
   }
 
   // ---------------------------------------------------------
@@ -142,47 +159,52 @@ object NbaScraper {
   // deprecated : incorrect team id retrieved for Brooklyn Nets
   // get team abbreviation, long name and url from team URL
   // Abbreviation is key
-  def getTeams : List[Team] = {
-
-    val teamURL = cfg.getString("team_url")
-
-    Jsoup.connect(teamURL).get().body().
-      select("table[id=teams_active]").
-      select("th[data-stat=franch_name] a[href]").asScala.
-      map(el => (el.attr("href").substring(7,10),el.text())).
-      map{ case (cd, nm) => new Team(cd, nm) }.toList
-  }
+  def getTeams : List[Team] = NbaScraper.teams
 
   // ---------------------------------------------------------
-
+  // select jsoup elements for all games for this team and year
+  def getGameElements(teamId : String, year: Int) : List[Element] = {
+    val scheduleURL = cfg.getString("source_url") +
+      s"/teams/${teamId}/${year.toString}_games.html"
+    Jsoup.connect(scheduleURL).get().body().
+      select("tbody").select("tr:not(tr.thead)").asScala.toList
+  }
+  // ---------------------------------------------------------
+  // select all games and map to TeamGame (scheduled and/or completed)
+  def getScheduleGames (teamId: String, year : Int) : List[TeamGame] = {
+    getGameElements(teamId, year).map(el =>
+      TeamGame(
+          teamId
+        , year
+        , el.select("td[data-stat=opp_name]").attr("csk").substring(0,3)
+        , el.select("td[data-stat=date_game]").attr("csk")
+        , if (el.select("td[data-stat=game_location]").text() == "@") false else true
+      )
+    )
+  }
+  // ---------------------------------------------------------
+  // map all temmIds to getTeam elmements filtered by presence of a result
+  // create GameResult for each
   def getAllGameResults(year: Int) : List[GameResult] = {
     val teamIds = teams.map(_.teamId)
     teamIds.flatMap(teamId => getTeamGameResults(teamId, year) ).toList
   }
+
   // ---------------------------------------------------------
-
   def getTeamGameResults(teamId : String, year : Int) : List[GameResult] = {
-    val scheduleURL = cfg.getString("source_url") +
-      s"/teams/${teamId}/${year.toString}_games.html"
-
-    // select jsoup elements for all games for this team and year
-    val gameEl = Jsoup.connect(scheduleURL).get().body().
-        select("tbody").select("tr:not(tr.thead)").asScala
-    
     // -----------------------------------------------------
     // filter fn to select only games with results
     def hasResult(g : Element) : Boolean =
       g.select("td[data-stat=game_result]").text() != ""
     // -----------------------------------------------------
-  
-    gameEl.filter(hasResult _).map(el => 
+
+    getGameElements(teamId, year).filter(hasResult _).map(el =>
       GameResult(
-        TeamGame(teamId
-          , year
-          , el.select("td[data-stat=opp_name]").attr("csk").substring(0,3)
-          , el.select("td[data-stat=date_game]").attr("csk")
-          , el.select("td[data-stat=game_location]").text()
-        )
+          teamId
+        , year
+        , el.select("td[data-stat=opp_name]").attr("csk").substring(0,3)
+        , el.select("td[data-stat=date_game]").attr("csk")
+        , if (el.select("td[data-stat=game_location]").text() == "@") false else true
         , el.select("td[data-stat=game_result]").text()
         , (el.select("td[data-stat=overtimes]").text() == "OT")
         , el.select("td[data-stat=pts]").text().toInt
@@ -202,7 +224,6 @@ object NbaScraper {
     fw.close()
   }
   // ---------------------------------------------------------
-  
-  
+
 }
 

@@ -53,13 +53,6 @@ class NbaScrapeTest extends AnyFunSuite {
     assert(atlanta.json.startsWith("""{"team_id":"ATL""""))
   }
 
-  test("Retrieves single player attributes") {
-    val testPlayer = getPlayerURLsByLetter(testURL).
-      filter(_.name == testName).head
-    val playerAttributes = getPlayerAttributes(testPlayer.url)
-    assert(playerAttributes.size == 6) 
-  }
-
   test("Player attribute selection succeeds") {
     val multiLetterURLs = getPlayerURLs(testLetters)
     val status = try {
@@ -69,15 +62,6 @@ class NbaScrapeTest extends AnyFunSuite {
       case ex : java.lang.NullPointerException => false
     }
   assert(status) 
-  }
-
-  test(s"One active player objects created for ${testName}") {
-    val testPlayerURL = getPlayerURLsByLetter(testURL).
-      filter(_.name == testName) 
-    val players = testPlayerURL.
-      map(u => new Player(u.name, u.url, u.isActive
-        , getPlayerAttributes(u.url) ) )
-    assert(players.size == 1)
   }
 
   test(s"Team results for ${testTeamId} ${testCurrentYear} returned") {

@@ -7,14 +7,14 @@ case class TeamGame(
   , year: Int
   , oppTeamId: String
   , dateGame: String
-  , location: String
+  , homeGame : Boolean
   ) {
   val json = Json.obj(
       "team_id" -> teamId
     , "opp_team_id" -> oppTeamId
     , "year" -> year
     , "date_game" -> dateGame
-    , "location" -> location
+    , "home_game" -> homeGame
   )
 }
  

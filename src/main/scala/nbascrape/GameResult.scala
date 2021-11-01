@@ -3,7 +3,11 @@ package nbascrape
 import play.api.libs.json._
 
 case class GameResult(
-    game : TeamGame
+    teamId: String
+  , year: Int
+  , oppTeamId: String
+  , dateGame: String
+  , homeGame : Boolean
   , result: String
   , overtime: Boolean
   , teamPts : Int
@@ -13,11 +17,11 @@ case class GameResult(
   , gameStreak : String) {
 
   val json = Json.obj(
-      "team_id" -> game.teamId
-    , "opp_team_id" -> game.oppTeamId
-    , "year" -> game.year
-    , "date_game" -> game.dateGame
-    , "game_location" -> game.location
+      "team_id" -> teamId
+    , "opp_team_id" -> oppTeamId
+    , "year" -> year
+    , "date_game" -> dateGame
+    , "home_game" -> homeGame
     , "result" -> result
     , "overtime" -> overtime
     , "team_pts" -> teamPts
